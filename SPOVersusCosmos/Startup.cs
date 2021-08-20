@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,19 @@ namespace SPOVersusCosmos
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            // Add response caching and default cache policy
+            services.AddResponseCaching();
+            services.AddControllersWithViews(options =>
+            {
+                options.CacheProfiles.Add("DefaultCachePolicy", new Microsoft.AspNetCore.Mvc.CacheProfile()
+                {
+                    Duration = 60, // Number of seconds to cache
+                    Location = Microsoft.AspNetCore.Mvc.ResponseCacheLocation.Any,
+                    NoStore = false,
+                    VaryByQueryKeys = new string[] { "*" },
+                    VaryByHeader = "User-Agent"
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,6 +56,22 @@ namespace SPOVersusCosmos
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            // Enable response caching and set default behavior
+            app.UseResponseCaching();
+            app.Use(async (context, next) =>
+            {
+                context.Response.GetTypedHeaders().CacheControl =
+                    new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                    {
+                        Public = true,
+                        MaxAge = TimeSpan.FromSeconds(10) // Default number of seconds to cache if no cache policy specified
+                    };
+                context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
+                    new string[] { "User-Agent" };
+
+                await next();
+            });
 
             app.UseAuthorization();
 

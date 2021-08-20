@@ -68,6 +68,8 @@ namespace SPOVersusCosmos.Controllers
             return View();
         }
 
+        // Cache response using the default cache policy
+        [ResponseCache(CacheProfileName = "DefaultCachePolicy")]
         public async Task<IActionResult> GetFromSPO()
         {
             List<Post> posted = new List<Post>();
@@ -136,6 +138,8 @@ namespace SPOVersusCosmos.Controllers
             return View("List", posted);
         }
 
+        // Cache response using the default cache policy
+        [ResponseCache(CacheProfileName = "DefaultCachePolicy")]
         public async Task<IActionResult> GetFromCosmos()
         {
             List<Post> posted = new List<Post>();
